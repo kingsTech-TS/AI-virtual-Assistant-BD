@@ -17,12 +17,12 @@ def new_message_doc(
     sources: list | None = None,
     requires_human_support: bool | None = None,
 ) -> dict:
-    from app.utils.helpers import utcnow
+    from datetime import datetime
     doc = {
         "conversation_id": conversation_id,
         "sender": sender,
         "content": content,
-        "created_at": utcnow(),
+        "created_at": datetime.utcnow(),
     }
     if intent is not None:
         doc["intent"] = intent

@@ -4,8 +4,8 @@ from app.constants.statuses import ConversationStatus
 
 
 def new_conversation_doc(user_id, title: str) -> dict:
-    from app.utils.helpers import utcnow
-    now = utcnow()
+    from datetime import datetime
+    now = datetime.utcnow()
     return {
         "user_id": user_id,
         "title": title or "New Conversation",

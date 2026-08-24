@@ -214,16 +214,20 @@ INTENT_KEYWORDS: Dict[Intent, List[str]] = {
 }
 
 
+# Maps each intent to the `category` field used in knowledge_base documents.
+# These values MUST match the category strings stored on KnowledgeDoc records
+# (set during seeding or via the admin knowledge API). A mismatch silently
+# produces zero RAG results and triggers the "no sources" guardrail.
 INTENT_TO_CATEGORY: Dict[Intent, str] = {
-    Intent.COURSE_REGISTRATION: "registration",
+    Intent.COURSE_REGISTRATION: "course_registration",
     Intent.ADMISSION: "admission",
-    Intent.EXAM_SCHEDULE: "examination",
+    Intent.EXAM_SCHEDULE: "exam_schedule",
     Intent.ACADEMIC_CALENDAR: "academic_calendar",
     Intent.RESULTS: "results",
-    Intent.PORTAL_PROBLEM: "portal",
-    Intent.PASSWORD_CHANGE: "password",
+    Intent.PORTAL_PROBLEM: "portal_problem",
+    Intent.PASSWORD_CHANGE: "password_change",
     Intent.PERSONAL_DETAILS: "general",
-    Intent.DEPARTMENTAL_ISSUE: "departments",
+    Intent.DEPARTMENTAL_ISSUE: "departmental_issue",
     Intent.FEES: "fees",
     Intent.GENERAL_INFORMATION: "general",
     Intent.HUMAN_SUPPORT: "general",

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import asyncio
-from datetime import timedelta
+from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional
 
 from app.ai.guardrails import apply_guardrails
@@ -19,7 +19,6 @@ from app.models.message import (
 )
 from app.schemas.chat import ChatRequest, ChatResponseData, SourceInfo
 from app.services.conversation_service import create_conversation
-from app.utils.helpers import utcnow
 from app.utils.ids import to_obj_id
 
 
@@ -32,7 +31,13 @@ from app.utils.ids import to_obj_id
 # within a short window as a duplicate — returning the reply already generated
 # for it instead of calling the gateway again. This both removes the duplicate
 # and avoids a wasted (rate-limited) LLM call.
-_DEDUP_WINDOW_SECONDS = 15
+# Browsers / React StrictMode can fire the same request twice in quick succession.
+# We deduplicate by serialising each user's requests with an in-process lock and
+# by detecting an identical message that arrives within this window.
+# NOTE: Motor stores datetimes as **naive UTC**. The cutoff MUST also be naive
+# UTC (datetime.utcnow()) so the MongoDB $gte comparison works correctly.
+# Using a tz-aware utcnow() causes a silent type-mismatch and the guard never fires.
+_DEDUP_WINDOW_SECONDS = 30  # generous window to cover slow LLM responses
 
 _user_locks: Dict[str, asyncio.Lock] = {}
 _user_locks_guard = asyncio.Lock()
@@ -117,7 +122,9 @@ async def _process_chat_locked(
     arrival,
 ) -> ChatResponseData:
     department_id = current_user.get("department_id")
-    cutoff = arrival - timedelta(seconds=_DEDUP_WINDOW_SECONDS)
+    # IMPORTANT: Motor stores datetimes as naive UTC. We must use naive UTC here
+    # for the $gte to compare correctly against stored `created_at` values.
+    cutoff = datetime.utcnow() - timedelta(seconds=_DEDUP_WINDOW_SECONDS)
 
     if req.conversation_id is None:
         # A double-fired *first* message would otherwise create two separate
@@ -196,7 +203,7 @@ async def _process_chat_locked(
     assistant_result = await db[MESSAGES].insert_one(assistant_msg)
     assistant_msg["_id"] = assistant_result.inserted_id
 
-    conv_update: Dict[str, Any] = {"updated_at": utcnow()}
+    conv_update: Dict[str, Any] = {"updated_at": datetime.utcnow()}
     if is_first_message:
         title = req.message[:50].strip() or "New Conversation"
         conv_update["title"] = title
