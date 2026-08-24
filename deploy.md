@@ -117,6 +117,7 @@ In your Render service configuration, scroll down to the **Environment Variables
 
 | Key | Example Value / Description | Required? |
 | :--- | :--- | :--- |
+| `PYTHON_VERSION` | `3.11.9` | **Recommended** (or set via `.python-version` file) |
 | `APP_NAME` | `Academic Support Chatbot` | Yes |
 | `APP_ENV` | `production` | Yes |
 | `DEBUG` | `false` | Yes |
