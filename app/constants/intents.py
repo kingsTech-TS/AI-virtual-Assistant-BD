@@ -4,30 +4,114 @@ from typing import Dict, List
 
 class Intent(str, Enum):
     COURSE_REGISTRATION = "course_registration"
-    ADMISSION = "admission"
-    EXAM_SCHEDULE = "exam_schedule"
+    COURSE_MISSING = "course_missing"
+    COURSE_PREREQUISITE = "course_prerequisite"
+    COURSE_NOT_AVAILABLE = "course_not_available"
+    COURSE_REGISTRATION_ERROR = "course_registration_error"
+    COURSE_REGISTRATION_DEADLINE = "course_registration_deadline"
+    COURSE_ADD_DROP = "course_add_drop"
+    COURSE_WRONG_REGISTRATION = "course_wrong_registration"
     ACADEMIC_CALENDAR = "academic_calendar"
+    EXAMINATION = "examination"
+    EXAM_SCHEDULE = "exam_schedule"
     RESULTS = "results"
+    FEES = "fees"
+    ADMISSION = "admission"
     PORTAL_PROBLEM = "portal_problem"
     PASSWORD_CHANGE = "password_change"
     PERSONAL_DETAILS = "personal_details"
     DEPARTMENTAL_ISSUE = "departmental_issue"
-    FEES = "fees"
+    GENERAL_ACADEMIC_SUPPORT = "general_academic_support"
     GENERAL_INFORMATION = "general_information"
     HUMAN_SUPPORT = "human_support"
     UNKNOWN = "unknown"
 
 
 INTENT_KEYWORDS: Dict[Intent, List[str]] = {
+    Intent.COURSE_MISSING: [
+        "course missing",
+        "missing from my list",
+        "missing from list",
+        "can't see course",
+        "cannot see course",
+        "course isn't showing",
+        "course is not showing",
+        "not showing on my registration",
+        "can't find a course",
+        "cannot find a course",
+        "course disappeared",
+        "disappeared from my registration",
+        "disappeared from my portal",
+        "subject not showing",
+        "subject not listed",
+        "course not listed",
+        "don't have one of my courses",
+        "do not have one of my courses",
+        "missing course",
+        "missing courses",
+        "not on my registration page",
+        "not available on my portal",
+        "where is my course",
+    ],
+    Intent.COURSE_PREREQUISITE: [
+        "prerequisite",
+        "prerequisites",
+        "pre-requisite",
+        "pre requisite",
+        "required course before",
+        "can i take without prerequisite",
+        "prereq",
+        "prereqs",
+    ],
+    Intent.COURSE_NOT_AVAILABLE: [
+        "course not available",
+        "not available for registration",
+        "course unavailable",
+        "cannot select course",
+        "can't select course",
+        "subject unavailable",
+        "course closed",
+        "course full",
+    ],
+    Intent.COURSE_REGISTRATION_ERROR: [
+        "registration error",
+        "error registering",
+        "cannot submit registration",
+        "can't submit registration",
+        "error during registration",
+        "failed to register course",
+        "registration failed",
+    ],
+    Intent.COURSE_REGISTRATION_DEADLINE: [
+        "registration deadline",
+        "registration close",
+        "when does registration end",
+        "when does registration close",
+        "last day to register",
+        "late registration period",
+        "late registration deadline",
+    ],
+    Intent.COURSE_ADD_DROP: [
+        "add course",
+        "drop course",
+        "add or drop",
+        "add and drop",
+        "change course",
+        "remove course",
+        "course amendment",
+    ],
+    Intent.COURSE_WRONG_REGISTRATION: [
+        "wrong course",
+        "registered wrong",
+        "registered for the wrong",
+        "mistakenly registered",
+        "change registered course",
+    ],
     Intent.COURSE_REGISTRATION: [
         "course registration",
         "register courses",
         "how to register",
-        "registration close",
-        "registration deadline",
-        "add course",
-        "drop course",
-        "change course",
+        "how do i register courses",
         "course selection",
         "class registration",
         "semester registration",
@@ -35,6 +119,7 @@ INTENT_KEYWORDS: Dict[Intent, List[str]] = {
         "register subjects",
         "course enrolment",
         "course enrollment",
+        "register semester courses",
     ],
     Intent.ADMISSION: [
         "admission",
@@ -51,6 +136,8 @@ INTENT_KEYWORDS: Dict[Intent, List[str]] = {
         "acceptance letter",
         "application status",
         "admission requirements",
+        "cut off mark",
+        "post utme",
     ],
     Intent.EXAM_SCHEDULE: [
         "exam schedule",
@@ -66,6 +153,15 @@ INTENT_KEYWORDS: Dict[Intent, List[str]] = {
         "re-sit exam",
         "resit exam",
         "assessment schedule",
+        "exam docket",
+    ],
+    Intent.EXAMINATION: [
+        "examination",
+        "exam guidelines",
+        "exam rules",
+        "exam malpractice",
+        "exam hall",
+        "exam conduct",
     ],
     Intent.ACADEMIC_CALENDAR: [
         "academic calendar",
@@ -80,7 +176,7 @@ INTENT_KEYWORDS: Dict[Intent, List[str]] = {
         "study break",
         "university closure",
         "important dates",
-        "registration period",
+        "resumption date",
         "holiday schedule",
     ],
     Intent.RESULTS: [
@@ -109,10 +205,8 @@ INTENT_KEYWORDS: Dict[Intent, List[str]] = {
         "school portal",
         "portal down",
         "website not working",
-        "my portal removed",
-        "portal courses missing",
-        "portal issue",
-        "can't log into portal",
+        "500 internal error",
+        "session expired",
         "portal login issue",
     ],
     Intent.PASSWORD_CHANGE: [
@@ -158,9 +252,8 @@ INTENT_KEYWORDS: Dict[Intent, List[str]] = {
         "department head",
         "hod",
         "faculty issue",
-        "school department",
-        "csc department",
-        "my faculty",
+        "course adviser",
+        "level adviser",
     ],
     Intent.FEES: [
         "fees",
@@ -177,6 +270,16 @@ INTENT_KEYWORDS: Dict[Intent, List[str]] = {
         "billing",
         "invoice",
         "financial aid",
+        "bursary",
+    ],
+    Intent.GENERAL_ACADEMIC_SUPPORT: [
+        "academic support",
+        "general academic",
+        "academic advising",
+        "study guide",
+        "handbook",
+        "university policy",
+        "rules and regulations",
     ],
     Intent.GENERAL_INFORMATION: [
         "general information",
@@ -184,8 +287,6 @@ INTENT_KEYWORDS: Dict[Intent, List[str]] = {
         "where is",
         "how do i",
         "student handbook",
-        "university policy",
-        "rules and regulations",
         "contact university",
         "general enquiry",
         "frequently asked",
@@ -214,13 +315,17 @@ INTENT_KEYWORDS: Dict[Intent, List[str]] = {
 }
 
 
-# Maps each intent to the `category` field used in knowledge_base documents.
-# These values MUST match the category strings stored on KnowledgeDoc records
-# (set during seeding or via the admin knowledge API). A mismatch silently
-# produces zero RAG results and triggers the "no sources" guardrail.
 INTENT_TO_CATEGORY: Dict[Intent, str] = {
     Intent.COURSE_REGISTRATION: "course_registration",
+    Intent.COURSE_MISSING: "course_registration",
+    Intent.COURSE_PREREQUISITE: "course_registration",
+    Intent.COURSE_NOT_AVAILABLE: "course_registration",
+    Intent.COURSE_REGISTRATION_ERROR: "course_registration",
+    Intent.COURSE_REGISTRATION_DEADLINE: "course_registration",
+    Intent.COURSE_ADD_DROP: "course_registration",
+    Intent.COURSE_WRONG_REGISTRATION: "course_registration",
     Intent.ADMISSION: "admission",
+    Intent.EXAMINATION: "exam_schedule",
     Intent.EXAM_SCHEDULE: "exam_schedule",
     Intent.ACADEMIC_CALENDAR: "academic_calendar",
     Intent.RESULTS: "results",
@@ -229,6 +334,7 @@ INTENT_TO_CATEGORY: Dict[Intent, str] = {
     Intent.PERSONAL_DETAILS: "general",
     Intent.DEPARTMENTAL_ISSUE: "departmental_issue",
     Intent.FEES: "fees",
+    Intent.GENERAL_ACADEMIC_SUPPORT: "general",
     Intent.GENERAL_INFORMATION: "general",
     Intent.HUMAN_SUPPORT: "general",
     Intent.UNKNOWN: "general",
@@ -236,18 +342,27 @@ INTENT_TO_CATEGORY: Dict[Intent, str] = {
 
 
 INTENT_DESCRIPTIONS: Dict[Intent, str] = {
-    Intent.COURSE_REGISTRATION: "Queries about course registration, adding or dropping modules, and enrolment deadlines.",
-    Intent.ADMISSION: "Queries about admissions, application processes, and entry requirements.",
+    Intent.COURSE_MISSING: "Queries when a course or subject is missing, not showing, or disappeared from the student course list or registration page.",
+    Intent.COURSE_PREREQUISITE: "Queries asking about prerequisites for specific courses or whether a course can be taken without prerequisites.",
+    Intent.COURSE_NOT_AVAILABLE: "Queries about a course being unavailable, closed, or not open for selection.",
+    Intent.COURSE_REGISTRATION_ERROR: "Technical or validation errors encountered during course registration submission.",
+    Intent.COURSE_REGISTRATION_DEADLINE: "Queries asking about course registration start, closing dates, or late registration deadlines.",
+    Intent.COURSE_ADD_DROP: "Queries on how to add, drop, change, or amend registered courses.",
+    Intent.COURSE_WRONG_REGISTRATION: "Queries regarding mistakenly registering for the wrong course or correcting registration errors.",
+    Intent.COURSE_REGISTRATION: "General queries about course registration procedures, limits, and workflows.",
+    Intent.ADMISSION: "Queries about admissions, application processes, cut-off marks, and entry requirements.",
     Intent.EXAM_SCHEDULE: "Queries about examination schedules, timetables, and assessment dates.",
-    Intent.ACADEMIC_CALENDAR: "Queries about the academic calendar, semester dates, holidays, and important periods.",
+    Intent.EXAMINATION: "Queries about examination rules, conduct, dockets, and guidelines.",
+    Intent.ACADEMIC_CALENDAR: "Queries about the academic calendar, semester dates, holidays, and resumption.",
     Intent.RESULTS: "Queries about exam results, grades, transcripts, GPA, and academic records.",
     Intent.PORTAL_PROBLEM: "Issues with accessing or using the student portal.",
     Intent.PASSWORD_CHANGE: "Password recovery, reset, and account lockout assistance.",
     Intent.PERSONAL_DETAILS: "Updating personal information, contact details, and profile data.",
-    Intent.DEPARTMENTAL_ISSUE: "Issues or enquiries related to a specific department or faculty.",
-    Intent.FEES: "Queries about tuition fees, payment methods, deadlines, and billing.",
+    Intent.DEPARTMENTAL_ISSUE: "Issues or enquiries related to a specific department, adviser, or faculty.",
+    Intent.FEES: "Queries about tuition fees, payment methods, deadlines, and bursary.",
+    Intent.GENERAL_ACADEMIC_SUPPORT: "General academic support policies, handbooks, and guidance.",
     Intent.GENERAL_INFORMATION: "General university information, policies, and directions.",
-    Intent.HUMAN_SUPPORT: "User explicitly requests to speak to a human staff member.",
+    Intent.HUMAN_SUPPORT: "User explicitly requests to speak to a human staff member or submit a ticket.",
     Intent.UNKNOWN: "Intent could not be determined with sufficient confidence.",
 }
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Database Seeding Script.
-Seeds demo departments, sample knowledge base documents with embeddings, and sample FAQs.
+Seeds demo departments, sample knowledge base documents with section chunks & embeddings, and sample FAQs.
 All seeded entries are explicitly marked as DEMO / SAMPLE data.
 """
 
@@ -11,14 +11,13 @@ import asyncio
 import sys
 from motor.motor_asyncio import AsyncIOMotorClient
 
-from app.ai.embeddings import get_embeddings_provider
 from app.constants.statuses import FAQStatus, KnowledgeStatus
 from app.core.config import settings
 from app.database.collections import DEPARTMENTS, FAQS, KNOWLEDGE_BASE
 from app.models.department import new_department_doc
 from app.models.faq import new_faq_doc
 from app.models.knowledge import new_knowledge_doc
-from app.utils.helpers import utcnow
+from app.services.embedding_service import get_embedding_service
 
 DEMO_DEPARTMENTS = [
     {
@@ -53,9 +52,39 @@ DEMO_DEPARTMENTS = [
 
 DEMO_KNOWLEDGE = [
     {
-        "title": "[DEMO] Course Registration Procedure",
+        "title": "Course Registration Guide",
+        "section": "Missing Courses",
         "category": "course_registration",
+        "intent": ["course_missing", "course_not_available"],
+        "source": "Academic Regulations Handbook 2026",
+        "page": 5,
+        "content": (
+            "A course may be missing from a student's course list because the course is not offered in the current "
+            "semester, the student has not met a prerequisite, the course is not part of the student's approved curriculum, "
+            "or the department has not made the course available for registration. If you believe a course like CSC 301 should "
+            "be available, check your approved curriculum and consult your departmental course adviser."
+        ),
+    },
+    {
+        "title": "Course Registration Guide",
+        "section": "Course Prerequisites",
+        "category": "course_registration",
+        "intent": ["course_prerequisite"],
+        "source": "Academic Regulations Handbook 2026",
+        "page": 6,
+        "content": (
+            "Students cannot register for advanced modules without satisfying prerequisite requirements. "
+            "For example, CSC 301 (Database Systems) strictly requires completion of CSC 201 (Data Structures). "
+            "Prerequisite waivers require explicit written approval from the Head of Department (HOD)."
+        ),
+    },
+    {
+        "title": "Course Registration Guide",
+        "section": "Registration Procedure",
+        "category": "course_registration",
+        "intent": ["course_registration", "course_add_drop"],
         "source": "Demo Academic Handbook 2026",
+        "page": 3,
         "content": (
             "To register for semester courses, log in to the Student Portal (portal.demo.institution.edu) "
             "using your matric number and password. Navigate to 'Course Registration' under the Academic menu. "
@@ -65,9 +94,12 @@ DEMO_KNOWLEDGE = [
         ),
     },
     {
-        "title": "[DEMO] Undergraduate Admission Requirements",
+        "title": "Undergraduate Admission Brochure",
+        "section": "Admission Requirements",
         "category": "admission",
+        "intent": ["admission"],
         "source": "Demo Admissions Brochure",
+        "page": 2,
         "content": (
             "Undergraduate admission requires a minimum of five (5) credit passes in relevant O-Level subjects "
             "(including English Language and Mathematics) obtained in not more than two sittings. Candidates must "
@@ -76,9 +108,12 @@ DEMO_KNOWLEDGE = [
         ),
     },
     {
-        "title": "[DEMO] Semester Examination Guidelines and Regulations",
+        "title": "Examination Committee Regulations",
+        "section": "Semester Examination Guidelines",
         "category": "exam_schedule",
+        "intent": ["examination", "exam_schedule"],
         "source": "Demo Examination Committee Regulations",
+        "page": 1,
         "content": (
             "Students must arrive at the examination hall at least 30 minutes before the scheduled start time. "
             "A valid Student Identity Card and a stamped Examination Docket are mandatory for entry. Electronic gadgets, "
@@ -87,9 +122,12 @@ DEMO_KNOWLEDGE = [
         ),
     },
     {
-        "title": "[DEMO] 2026/2027 Academic Calendar Schedule",
+        "title": "2026/2027 Academic Calendar Schedule",
+        "section": "Semester Dates",
         "category": "academic_calendar",
+        "intent": ["academic_calendar"],
         "source": "Demo University Senate Calendar",
+        "page": 1,
         "content": (
             "First Semester: Resumption and registration starts October 1. Lectures run for 12 weeks from October 15. "
             "Mid-semester break is December 20 to January 5. Semester examinations commence February 15 and conclude March 5. "
@@ -97,9 +135,12 @@ DEMO_KNOWLEDGE = [
         ),
     },
     {
-        "title": "[DEMO] Student Portal Troubleshooting and Error Resolution",
+        "title": "Student Portal Troubleshooting Guide",
+        "section": "Portal Errors and Resolution",
         "category": "portal_problem",
+        "intent": ["portal_problem"],
         "source": "Demo ICT Support Manual",
+        "page": 4,
         "content": (
             "If you encounter errors on the student portal (e.g. 'Session Expired', 'Access Denied', or 500 internal errors): "
             "1. Clear your browser cache and cookies or try Incognito / Private browsing mode. "
@@ -110,9 +151,12 @@ DEMO_KNOWLEDGE = [
         ),
     },
     {
-        "title": "[DEMO] Student Account Password Recovery Process",
+        "title": "Student Account Security Policy",
+        "section": "Password Recovery Process",
         "category": "password_change",
+        "intent": ["password_change"],
         "source": "Demo ICT Security Policy",
+        "page": 2,
         "content": (
             "To reset your student portal password: Click 'Forgot Password' on the login page. Enter your registered "
             "institutional email address. A secure password reset link valid for 60 minutes will be sent to your email. "
@@ -121,9 +165,12 @@ DEMO_KNOWLEDGE = [
         ),
     },
     {
-        "title": "[DEMO] Departmental Academic Support and Advising",
+        "title": "Departmental Academic Advising Manual",
+        "section": "Adviser Consultations and Support",
         "category": "departmental_issue",
+        "intent": ["departmental_issue", "general_academic_support"],
         "source": "Demo Student Affairs Guide",
+        "page": 1,
         "content": (
             "Each academic department maintains designated Course Advisers for each level (100L through 400L/500L). "
             "For issues involving course prerequisites, grade disputes, or academic probation counseling, students "
@@ -132,14 +179,30 @@ DEMO_KNOWLEDGE = [
         ),
     },
     {
-        "title": "[DEMO] Semester Results Verification and CGPA Computation",
+        "title": "Academic Regulations and Grading Policy",
+        "section": "CGPA Computation and Results",
         "category": "results",
+        "intent": ["results"],
         "source": "Demo Academic Regulations",
+        "page": 7,
         "content": (
             "Semester results are published on the student portal within four (4) weeks following Senate approval. "
             "The university operates a 5-point CGPA grading system (A=5, B=4, C=3, D=2, E=1, F=0). If an enrolled course "
             "result is missing or marked incomplete (I), file a result query with your departmental exam officer within "
             "two weeks of result publication."
+        ),
+    },
+    {
+        "title": "Student Fees and Bursary Schedule",
+        "section": "Fee Payment Guidelines",
+        "category": "fees",
+        "intent": ["fees"],
+        "source": "Demo Bursary Department",
+        "page": 1,
+        "content": (
+            "Tuition fees must be paid through the official payment gateway integrated into the student portal. "
+            "Students are required to generate a Payment Reference Number (Remita/RRR) on the portal before initiating "
+            "bank transfers or card payments. Retain your official e-receipt as proof of payment for course registration clearance."
         ),
     },
 ]
@@ -148,6 +211,11 @@ DEMO_FAQS = [
     {
         "question": "How do I register for my semester courses?",
         "answer": "Log in to the student portal, select 'Course Registration', pick your approved core and elective courses (up to 24 units), submit online, and print your Course Form for your Course Adviser's signature.",
+        "category": "course_registration",
+    },
+    {
+        "question": "Why is a course missing from my registration list?",
+        "answer": "A course may be missing if it is not offered in the current semester, if you have not met the prerequisite requirements, or if the department has not made it available.",
         "category": "course_registration",
     },
     {
@@ -190,11 +258,6 @@ DEMO_FAQS = [
         "answer": "Course advisers hold consultation hours during weekdays in their departmental offices. You can also submit an academic support ticket to connect with departmental staff.",
         "category": "departmental_issue",
     },
-    {
-        "question": "When does the late course registration period end?",
-        "answer": "Late registration typically closes two weeks after the formal registration deadline and incurs a late surcharge fee.",
-        "category": "course_registration",
-    },
 ]
 
 
@@ -229,33 +292,37 @@ async def seed_database() -> None:
             dept_map[d["code"]] = res.inserted_id
             print(f"  [CREATED] Department {d['name']} ({d['code']})")
 
-    print("\n--- Seeding Knowledge Base Documents & Embeddings ---")
-    embeddings_provider = get_embeddings_provider()
+    print("\n--- Seeding Knowledge Base Documents & Section Embeddings ---")
+    embedding_service = get_embedding_service()
     for k in DEMO_KNOWLEDGE:
-        existing = await db[KNOWLEDGE_BASE].find_one({"title": k["title"]})
+        existing = await db[KNOWLEDGE_BASE].find_one({"title": k["title"], "section": k["section"]})
         if existing:
-            print(f"  [EXISTS] Knowledge doc: {k['title']}")
+            print(f"  [EXISTS] Knowledge doc: {k['title']} -> {k['section']}")
         else:
-            content_to_embed = f"{k['title']}\n\n{k['content']}"
+            content_to_embed = f"{k['title']} - {k['section']}\n\n{k['content']}"
             try:
-                embedding = await embeddings_provider.embed_one(content_to_embed)
+                embedding = await embedding_service.generate_embedding(content_to_embed)
             except Exception as e:
-                print(f"  [WARN] Failed to generate embedding: {e}; using empty vector")
+                print(f"  [WARN] Failed to generate embedding: {e}; using fallback vector")
                 embedding = []
 
             doc = new_knowledge_doc(
                 title=k["title"],
+                section=k["section"],
                 content=k["content"],
                 category=k["category"],
+                intent=k.get("intent", []),
                 created_by=None,
                 department_id=dept_map.get("CSC"),
                 source=k.get("source"),
+                page=k.get("page", 1),
                 status=KnowledgeStatus.PUBLISHED.value,
+                version=1,
                 embedding=embedding,
                 metadata={"is_demo": True},
             )
             await db[KNOWLEDGE_BASE].insert_one(doc)
-            print(f"  [CREATED] Knowledge doc: {k['title']} (embedded {len(embedding)} dims)")
+            print(f"  [CREATED] Knowledge doc: {k['title']} -> {k['section']} (embedded {len(embedding)} dims)")
 
     print("\n--- Seeding FAQs ---")
     for f in DEMO_FAQS:

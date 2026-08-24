@@ -591,57 +591,26 @@ async def process_document_upload(
     department_id: Optional[str] = None,
     faculty: Optional[str] = None,
 ) -> Dict[str, Any]:
-    text_content = extract_text_from_file_bytes(file_bytes, filename)
-    if not text_content or len(text_content.strip()) < 10:
-        raise BadRequest(message="Uploaded document contains insufficient or empty text", code="EMPTY_DOCUMENT")
-
+    from app.services import knowledge_service
     user_oid = to_obj_id(current_user.get("_id"))
-    dept_oid = to_obj_id(department_id)
-
-    # Chunking & Embeddings
-    chunks = chunk_text(text_content)
-    embeddings = get_embeddings_provider()
-
-    created_docs = []
-    main_doc_id = None
-
-    for idx, chunk in enumerate(chunks):
-        chunk_title = f"{title} (Part {idx + 1}/{len(chunks)})" if len(chunks) > 1 else title
-        embedding = await embeddings.embed_one(f"{chunk_title}\n\n{chunk}")
-
-        doc = new_knowledge_doc(
-            title=chunk_title,
-            content=chunk,
-            category=category,
-            created_by=user_oid,
-            department_id=dept_oid,
-            faculty=faculty,
-            source=filename,
-            status=KnowledgeStatus.PUBLISHED.value,
-            embedding=embedding,
-            metadata={"filename": filename, "chunk_index": idx, "total_chunks": len(chunks)},
-        )
-
-        res = await db[KNOWLEDGE_BASE].insert_one(doc)
-        if idx == 0:
-            main_doc_id = res.inserted_id
-        created_docs.append(str(res.inserted_id))
-
-    await audit_action(
-        db,
-        user_id=user_oid,
-        action="knowledge_uploaded",
-        resource_type="knowledge",
-        resource_id=main_doc_id,
-        metadata={"filename": filename, "title": title, "category": category, "chunks_created": len(created_docs)},
+    
+    ingest_result = await knowledge_service.ingest_document_file(
+        db=db,
+        file_bytes=file_bytes,
+        filename=filename,
+        title=title,
+        category=category,
+        department_id=department_id,
+        created_by_id=user_oid,
+        version=1,
     )
 
     return {
         "title": title,
         "filename": filename,
         "category": category,
-        "chunks_count": len(created_docs),
-        "document_ids": created_docs,
+        "chunks_count": ingest_result.get("total_chunks", 1),
+        "document_ids": ingest_result.get("chunk_ids", []),
         "status": KnowledgeStatus.PUBLISHED.value,
-        "message": f"Successfully processed and indexed document into {len(created_docs)} knowledge base chunk(s).",
+        "message": f"Successfully processed and indexed document into {ingest_result.get('total_chunks', 1)} section-aware knowledge base chunk(s).",
     }

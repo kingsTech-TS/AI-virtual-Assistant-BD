@@ -138,12 +138,14 @@ class MockAsyncCollection:
         res.inserted_id = new_doc["_id"]
         return res
 
-    async def find_one(self, query: Optional[Dict[str, Any]] = None, projection: Any = None):
+    async def find_one(self, query: Optional[Dict[str, Any]] = None, projection: Any = None, sort: Any = None):
         query = query or {}
-        for d in self.docs:
-            if _doc_matches(d, query):
-                return dict(d)
-        return None
+        matched = [dict(d) for d in self.docs if _doc_matches(d, query)]
+        if sort:
+            cursor = AsyncCursor(matched)
+            cursor.sort(sort)
+            matched = cursor._docs
+        return matched[0] if matched else None
 
     def find(self, query: Optional[Dict[str, Any]] = None, projection: Any = None):
         query = query or {}
@@ -235,6 +237,29 @@ class MockAsyncDatabase:
     def clear_all(self):
         for col in self._collections.values():
             col.docs.clear()
+
+
+from app.ai.llm_client import BaseLLMClient
+import app.ai.llm_client as llm_mod
+
+
+class MockTestLLMClient(BaseLLMClient):
+    async def generate(self, prompt: str, **kwargs) -> str:
+        return "To register for semester courses, log in to the Student Portal and select your approved courses."
+
+    async def generate_structured(self, prompt: str, **kwargs) -> Dict[str, Any]:
+        return {
+            "intent": "course_registration",
+            "category": "course_registration",
+            "confidence": 0.95,
+            "requires_knowledge_search": True,
+            "requires_human": False,
+        }
+
+
+@pytest.fixture(autouse=True)
+def mock_llm_client_fixture(monkeypatch):
+    monkeypatch.setattr(llm_mod, "_llm_client", MockTestLLMClient())
 
 
 @pytest.fixture(scope="session")

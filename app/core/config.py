@@ -33,9 +33,16 @@ class Settings(BaseSettings):
     USE_LLM_INTENT: bool = False
     USE_QUERY_EMBEDDINGS: bool = False
 
+    EMBEDDING_PROVIDER: str = "openai"
     EMBEDDING_MODEL: Optional[str] = None
     EMBEDDING_BASE_URL: Optional[str] = None
     EMBEDDING_API_KEY: Optional[str] = None
+    EMBEDDING_DIMENSIONS: int = 1536
+
+    VECTOR_SEARCH_INDEX: str = "vector_index"
+    RAG_MIN_RELEVANCE_SCORE: float = 0.60
+    RAG_TOP_CANDIDATES: int = 8
+    RAG_FINAL_CHUNKS: int = 4
 
     FRONTEND_URL: str = "http://localhost:3000"
 

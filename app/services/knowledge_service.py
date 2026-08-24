@@ -1,17 +1,102 @@
 from __future__ import annotations
 
-from typing import Any, Dict, Optional, Tuple
+from datetime import datetime
+from typing import Any, Dict, List, Optional, Tuple
 
-from app.ai.embeddings import get_embeddings_provider
 from app.core.exceptions import NotFound
 from app.database.collections import KNOWLEDGE_BASE
 from app.models.knowledge import knowledge_to_dict, new_knowledge_doc
 from app.schemas.common import PaginationParams
 from app.schemas.knowledge import KnowledgeCreate, KnowledgeUpdate
 from app.services.audit_service import audit_action
-from app.utils.helpers import utcnow
+from app.services.chunking_service import get_chunking_service
+from app.services.embedding_service import get_embedding_service
 from app.utils.ids import to_obj_id
 from app.utils.pagination import paginate_cursor
+
+
+async def ingest_document_file(
+    db,
+    file_bytes: bytes,
+    filename: str,
+    title: str,
+    category: str,
+    department_id: Optional[str] = None,
+    created_by_id: Optional[str] = None,
+    version: int = 1,
+) -> Dict[str, Any]:
+    """
+    Parses, section-chunks, embeds, and stores a document file (PDF, DOCX, TXT)
+    into the knowledge_base collection.
+    """
+    chunking_service = get_chunking_service()
+    chunks = chunking_service.chunk_document(
+        file_bytes=file_bytes,
+        filename=filename,
+        title=title,
+        category=category,
+        department_id=department_id,
+        version=version,
+    )
+
+    if not chunks:
+        # If no chunks produced, fallback to single document content
+        raw_text = file_bytes.decode("utf-8", errors="replace")[:10000]
+        chunks = [{
+            "title": title,
+            "section": "General",
+            "content": raw_text,
+            "page": 1,
+            "chunk_index": 0,
+            "category": category,
+            "department_id": department_id,
+            "version": version,
+        }]
+
+    embedding_service = get_embedding_service()
+    texts_to_embed = [f"{c['title']} - {c['section']}\n\n{c['content']}" for c in chunks]
+    embeddings = await embedding_service.generate_embeddings(texts_to_embed)
+
+    created_by_oid = to_obj_id(created_by_id) if created_by_id else None
+    inserted_ids: List[str] = []
+
+    for idx, c in enumerate(chunks):
+        emb = embeddings[idx] if idx < len(embeddings) else []
+        doc = new_knowledge_doc(
+            title=c["title"],
+            section=c.get("section", "General"),
+            content=c["content"],
+            category=c.get("category", category),
+            page=c.get("page", 1),
+            chunk_index=c.get("chunk_index", idx),
+            department_id=to_obj_id(c.get("department_id")),
+            source=filename,
+            status="published",
+            version=version,
+            embedding=emb,
+            created_by=created_by_oid,
+            metadata={"filename": filename, "total_chunks": len(chunks)},
+        )
+        res = await db[KNOWLEDGE_BASE].insert_one(doc)
+        inserted_ids.append(str(res.inserted_id))
+
+    if created_by_oid:
+        await audit_action(
+            db,
+            user_id=created_by_oid,
+            action="knowledge_document_ingested",
+            resource_type="knowledge",
+            resource_id=inserted_ids[0] if inserted_ids else None,
+            metadata={"title": title, "filename": filename, "chunks_count": len(chunks)},
+        )
+
+    return {
+        "title": title,
+        "filename": filename,
+        "total_chunks": len(chunks),
+        "chunk_ids": inserted_ids,
+        "status": "published",
+    }
 
 
 async def create(
@@ -19,9 +104,9 @@ async def create(
     data: KnowledgeCreate,
     created_by_id,
 ) -> Dict[str, Any]:
-    embeddings = get_embeddings_provider()
+    embedding_service = get_embedding_service()
     content_to_embed = f"{data.title}\n\n{data.content}"
-    embedding = await embeddings.embed_one(content_to_embed)
+    embedding = await embedding_service.generate_embedding(content_to_embed)
 
     created_by_oid = to_obj_id(created_by_id)
     doc = new_knowledge_doc(
@@ -100,7 +185,7 @@ async def update(
     if not existing:
         raise NotFound(message="Knowledge entry not found", code="KNOWLEDGE_NOT_FOUND")
 
-    update_data: Dict[str, Any] = {"$set": {"updated_by": updated_by_oid, "updated_at": utcnow()}}
+    update_data: Dict[str, Any] = {"$set": {"updated_by": updated_by_oid, "updated_at": datetime.utcnow()}}
 
     if data.title is not None:
         update_data["$set"]["title"] = data.title
@@ -124,13 +209,12 @@ async def update(
     if content_changed or title_changed:
         new_title = data.title if data.title is not None else existing.get("title", "")
         new_content = data.content if data.content is not None else existing.get("content", "")
-        embeddings = get_embeddings_provider()
+        embedding_service = get_embedding_service()
         content_to_embed = f"{new_title}\n\n{new_content}"
-        new_embedding = await embeddings.embed_one(content_to_embed)
+        new_embedding = await embedding_service.generate_embedding(content_to_embed)
         update_data["$set"]["embedding"] = new_embedding
 
     await db[KNOWLEDGE_BASE].update_one({"_id": oid}, update_data)
-
     updated = await db[KNOWLEDGE_BASE].find_one({"_id": oid})
 
     await audit_action(
