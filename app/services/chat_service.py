@@ -105,7 +105,7 @@ async def process_chat(
     # full LLM timeout; anchoring here (rather than after acquiring the lock)
     # guarantees the queued duplicate still sees the first request's messages
     # inside its window no matter how slow that first request was.
-    arrival = utcnow()
+    arrival = datetime.utcnow()
 
     # Serialize this user's chat requests so a double-fire can't create two
     # message pairs by racing the duplicate check below.
