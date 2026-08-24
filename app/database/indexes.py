@@ -1,0 +1,222 @@
+from typing import Any, Dict, List, Tuple
+
+from app.database.collections import (
+    AUDIT_LOGS,
+    CONVERSATIONS,
+    FAQS,
+    FEEDBACK,
+    KNOWLEDGE_BASE,
+    MESSAGES,
+    NOTIFICATIONS,
+    TICKETS,
+    USERS,
+)
+
+IndexSpec = Dict[str, Any]
+
+INDEXES: List[IndexSpec] = [
+    {
+        "collection": USERS,
+        "key": [("email", 1)],
+        "unique": True,
+        "kwargs": {"name": "idx_users_email_unique"},
+    },
+    {
+        "collection": USERS,
+        "key": [("matric_number", 1)],
+        "unique": True,
+        "kwargs": {"name": "idx_users_matric_unique"},
+    },
+    {
+        "collection": USERS,
+        "key": [("role", 1)],
+        "unique": False,
+        "kwargs": {"name": "idx_users_role"},
+    },
+    {
+        "collection": USERS,
+        "key": [("department_id", 1)],
+        "unique": False,
+        "kwargs": {"name": "idx_users_department_id"},
+    },
+    {
+        "collection": CONVERSATIONS,
+        "key": [("user_id", 1)],
+        "unique": False,
+        "kwargs": {"name": "idx_conversations_user_id"},
+    },
+    {
+        "collection": CONVERSATIONS,
+        "key": [("created_at", -1)],
+        "unique": False,
+        "kwargs": {"name": "idx_conversations_created_at"},
+    },
+    {
+        "collection": CONVERSATIONS,
+        "key": [("updated_at", -1)],
+        "unique": False,
+        "kwargs": {"name": "idx_conversations_updated_at"},
+    },
+    {
+        "collection": MESSAGES,
+        "key": [("conversation_id", 1)],
+        "unique": False,
+        "kwargs": {"name": "idx_messages_conversation_id"},
+    },
+    {
+        "collection": MESSAGES,
+        "key": [("created_at", -1)],
+        "unique": False,
+        "kwargs": {"name": "idx_messages_created_at"},
+    },
+    {
+        "collection": KNOWLEDGE_BASE,
+        "key": [("category", 1)],
+        "unique": False,
+        "kwargs": {"name": "idx_knowledge_category"},
+    },
+    {
+        "collection": KNOWLEDGE_BASE,
+        "key": [("status", 1)],
+        "unique": False,
+        "kwargs": {"name": "idx_knowledge_status"},
+    },
+    {
+        "collection": KNOWLEDGE_BASE,
+        "key": [("department_id", 1)],
+        "unique": False,
+        "kwargs": {"name": "idx_knowledge_department_id"},
+    },
+    {
+        "collection": KNOWLEDGE_BASE,
+        "key": [("created_at", -1)],
+        "unique": False,
+        "kwargs": {"name": "idx_knowledge_created_at"},
+    },
+    {
+        "collection": FAQS,
+        "key": [("category", 1)],
+        "unique": False,
+        "kwargs": {"name": "idx_faqs_category"},
+    },
+    {
+        "collection": FAQS,
+        "key": [("status", 1)],
+        "unique": False,
+        "kwargs": {"name": "idx_faqs_status"},
+    },
+    {
+        "collection": FAQS,
+        "key": [("created_at", -1)],
+        "unique": False,
+        "kwargs": {"name": "idx_faqs_created_at"},
+    },
+    {
+        "collection": TICKETS,
+        "key": [("ticket_number", 1)],
+        "unique": True,
+        "kwargs": {"name": "idx_tickets_ticket_number_unique"},
+    },
+    {
+        "collection": TICKETS,
+        "key": [("user_id", 1)],
+        "unique": False,
+        "kwargs": {"name": "idx_tickets_user_id"},
+    },
+    {
+        "collection": TICKETS,
+        "key": [("department_id", 1)],
+        "unique": False,
+        "kwargs": {"name": "idx_tickets_department_id"},
+    },
+    {
+        "collection": TICKETS,
+        "key": [("assigned_to", 1)],
+        "unique": False,
+        "kwargs": {"name": "idx_tickets_assigned_to"},
+    },
+    {
+        "collection": TICKETS,
+        "key": [("status", 1)],
+        "unique": False,
+        "kwargs": {"name": "idx_tickets_status"},
+    },
+    {
+        "collection": TICKETS,
+        "key": [("priority", 1)],
+        "unique": False,
+        "kwargs": {"name": "idx_tickets_priority"},
+    },
+    {
+        "collection": TICKETS,
+        "key": [("created_at", -1)],
+        "unique": False,
+        "kwargs": {"name": "idx_tickets_created_at"},
+    },
+    {
+        "collection": FEEDBACK,
+        "key": [("message_id", 1)],
+        "unique": False,
+        "kwargs": {"name": "idx_feedback_message_id"},
+    },
+    {
+        "collection": FEEDBACK,
+        "key": [("user_id", 1)],
+        "unique": False,
+        "kwargs": {"name": "idx_feedback_user_id"},
+    },
+    {
+        "collection": FEEDBACK,
+        "key": [("created_at", -1)],
+        "unique": False,
+        "kwargs": {"name": "idx_feedback_created_at"},
+    },
+    {
+        "collection": AUDIT_LOGS,
+        "key": [("action", 1)],
+        "unique": False,
+        "kwargs": {"name": "idx_audit_action"},
+    },
+    {
+        "collection": AUDIT_LOGS,
+        "key": [("user_id", 1)],
+        "unique": False,
+        "kwargs": {"name": "idx_audit_user_id"},
+    },
+    {
+        "collection": AUDIT_LOGS,
+        "key": [("created_at", -1)],
+        "unique": False,
+        "kwargs": {"name": "idx_audit_created_at"},
+    },
+    {
+        "collection": AUDIT_LOGS,
+        "key": [("resource_type", 1)],
+        "unique": False,
+        "kwargs": {"name": "idx_audit_resource_type"},
+    },
+    {
+        "collection": AUDIT_LOGS,
+        "key": [("resource_id", 1)],
+        "unique": False,
+        "kwargs": {"name": "idx_audit_resource_id"},
+    },
+    {
+        "collection": NOTIFICATIONS,
+        "key": [("user_id", 1)],
+        "unique": False,
+        "kwargs": {"name": "idx_notifications_user_id"},
+    },
+    {
+        "collection": NOTIFICATIONS,
+        "key": [("is_read", 1)],
+        "unique": False,
+        "kwargs": {"name": "idx_notifications_is_read"},
+    },
+    {
+        "collection": NOTIFICATIONS,
+        "key": [("created_at", -1)],
+        "unique": False,
+        "kwargs": {"name": "idx_notifications_created_at"},
+    },
+]

@@ -1,0 +1,149 @@
+================================================================================
+INSTITUTIONAL UNDERGRADUATE ADMISSIONS HANDBOOK & POLICY (2026/2027 ACADEMIC SESSION)
+================================================================================
+Office of the Registrar & Admissions Board
+Institution: Apex Federal University of Technology & Sciences
+Document Reference: AFUTS/ADM/HB/2026-V1
+Category: admission
+Status: Approved & Published
+
+--------------------------------------------------------------------------------
+1. GENERAL ADMISSION PHILOSOPHY & OBJECTIVES
+--------------------------------------------------------------------------------
+The Admissions Board of Apex Federal University operates an open, merit-driven, 
+and transparent admissions process designed to select qualified candidates across 
+diverse academic backgrounds into undergraduate degree programs.
+
+--------------------------------------------------------------------------------
+2. GENERAL UNDERGRADUATE ENTRY REQUIREMENTS (100-LEVEL)
+--------------------------------------------------------------------------------
+Candidates seeking admission into 100-Level undergraduate degree programs must 
+satisfy the following minimum criteria:
+1. Minimum Age: Candidates must be at least 16 years of age by October 31 of 
+   the admission year.
+2. O-Level Qualifications: A minimum of five (5) credit passes in relevant 
+   Senior Secondary Certificate Examination (SSCE / WAEC / NECO / NABTEB) subjects 
+   obtained in NOT more than two (2) sittings.
+3. Compulsory Core Subjects: English Language and Mathematics are mandatory credit 
+   passes for all degree courses across all faculties.
+4. UTME Score: A minimum score of 200 in the Unified Tertiary Matriculation 
+   Examination (UTME) for science and technology disciplines, and at least 180 
+   for arts, management, and social sciences.
+5. First Choice Institution: The University must be selected as the candidate's 
+   First Choice institution on the JAMB portal.
+
+--------------------------------------------------------------------------------
+3. FACULTY & DEPARTMENT-SPECIFIC REQUIREMENTS (O-LEVEL & UTME COMBINATION)
+--------------------------------------------------------------------------------
+A. Faculty of Physical Sciences
+- Department of Computer Science (B.Sc. Computer Science):
+  * O-Level Subjects: English Language, Mathematics, Physics, Chemistry, and any 
+    other Science subject (Biology, Further Mathematics, or Computer Studies).
+  * UTME Subject Combination: English Language, Mathematics, Physics, and Chemistry.
+  * Departmental Cut-Off Point: 220 in UTME + 65% in Post-UTME Screening.
+
+- Department of Physics (B.Sc. Physics / Applied Geophysics):
+  * O-Level Subjects: English Language, Mathematics, Physics, Chemistry, and 
+    Biology or Further Mathematics.
+  * UTME Subject Combination: English Language, Physics, Mathematics, and Chemistry.
+  * Departmental Cut-Off Point: 200 in UTME.
+
+- Department of Mathematics & Statistics (B.Sc. Mathematics):
+  * O-Level Subjects: English Language, Mathematics, Physics, and two other 
+    science subjects.
+  * UTME Subject Combination: English Language, Mathematics, Physics, and Chemistry.
+
+- Department of Chemistry (B.Sc. Industrial Chemistry):
+  * O-Level Subjects: English Language, Mathematics, Chemistry, Physics, and Biology.
+  * UTME Subject Combination: English Language, Chemistry, Physics, and Mathematics/Biology.
+
+B. Faculty of Engineering & Technology
+- Electrical / Mechanical / Civil / Software Engineering:
+  * O-Level: English Language, Mathematics, Physics, Chemistry, and Further 
+    Mathematics or Technical Drawing.
+  * UTME: English Language, Mathematics, Physics, and Chemistry (Minimum UTME: 230).
+
+--------------------------------------------------------------------------------
+4. DIRECT ENTRY (200-LEVEL) ADMISSION REQUIREMENTS
+--------------------------------------------------------------------------------
+Candidates with advanced qualifications may apply for Direct Entry into 200-Level:
+1. Cambridge GCE / IJMB / JUPEB: Minimum of 10 points across three (3) relevant 
+   Advanced Level subjects.
+2. National Diploma (ND): Upper Credit (minimum CGPA 3.00/4.00) from an accredited 
+   polytechnic or monotechnic in a relevant field.
+3. Higher National Diploma (HND): Upper Credit holders may be considered for 
+   200-Level or 300-Level depending on faculty curriculum alignment.
+4. Professional Diplomas or certificates without accredited O-Level prerequisites 
+   are strictly NOT accepted.
+
+--------------------------------------------------------------------------------
+5. STEP-BY-STEP APPLICATION & POST-UTME SCREENING PROCEDURE
+--------------------------------------------------------------------------------
+Step 1: Online Portal Registration
+- Visit the official university admissions portal (admissions.afuts.edu.ng).
+- Enter your UTME Registration Number to verify eligibility.
+- Pay the non-refundable Post-UTME screening fee of N2,000 via the integrated 
+  online payment gateway.
+
+Step 2: Bio-Data & Credential Upload
+- Fill out the digital screening form with personal details, O-Level grades, 
+  and examination center details.
+- Upload clear scanned copies of:
+  * O-Level statement of results / original certificates (JPEG/PDF, max 500KB).
+  * UTME result slip showing candidate passport photograph.
+  * Birth Certificate or statutory declaration of age.
+  * Local Government Identification Certificate.
+
+Step 3: Post-UTME Computer-Based Screening Test (CBT)
+- Print the Screening Registration Slip containing your assigned CBT examination 
+  date, venue, and time.
+- Arrive at the University ICT Examination Center 45 minutes before test commencement.
+- Prohibited items: Mobile phones, smart watches, electronic calculators, and 
+  unauthorized materials.
+
+--------------------------------------------------------------------------------
+6. ADMISSION NOTIFICATION, ACCEPTANCE & CLEARANCE GUIDELINES
+--------------------------------------------------------------------------------
+1. Checking Admission Status:
+   - Admitted candidates will receive an SMS and email notification. Status can 
+     also be verified on JAMB CAPS and the AFUTS admissions portal.
+2. JAMB CAPS Acceptance:
+   - Candidates must click 'ACCEPT ADMISSION' on JAMB Central Admissions 
+     Processing System (CAPS) within four (4) weeks of offer.
+3. Non-Refundable Acceptance Fee:
+   - Pay the mandatory Acceptance Fee of N35,000 on the student portal within 
+     two (2) weeks of offer to avoid automatic forfeiture.
+4. Departmental Verification & Physical Clearance:
+   - Present original credentials at the Departmental Admissions Office for 
+     physical screening.
+   - Collect the official Admission Verification Certificate and matriculation docket.
+
+--------------------------------------------------------------------------------
+7. DEFERMENT OF ADMISSION POLICY
+--------------------------------------------------------------------------------
+- Newly admitted students who are unable to resume for verifiable medical, 
+  financial, or compassionate reasons may apply for Deferment of Admission for 
+  one (1) academic session.
+- Requirements for Deferment:
+  * Payment of the non-refundable Acceptance Fee.
+  * Formal written application addressed to the Registrar through the Head of Department.
+  * Deferment processing fee of N10,000.
+  * Submission deadline is six (6) weeks after semester resumption.
+
+--------------------------------------------------------------------------------
+8. FRAUD, FORGERY & DISQUALIFICATION CLAUSE
+--------------------------------------------------------------------------------
+The University maintains a zero-tolerance policy towards academic dishonesty and 
+forgery. Any candidate found to have submitted forged results, false bio-data, 
+or manipulated credentials will face immediate disqualification, withdrawal of 
+admission, and prosecution by law enforcement agencies.
+
+--------------------------------------------------------------------------------
+9. ADMISSION HELPDESK & SUPPORT CONTACTS
+--------------------------------------------------------------------------------
+- Admissions Office: Ground Floor, Senate Building, Main Campus.
+- Email: admissions-support@afuts.edu.ng
+- Helpdesk Phone: +234 (0) 800-AFUTS-ADM (Mon - Fri: 8:00 AM - 4:00 PM)
+- AI Support Chatbot: Available 24/7 on the student portal for inquiries and 
+  support ticket escalations.
+================================================================================
