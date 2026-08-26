@@ -4,8 +4,8 @@ from datetime import timedelta
 from typing import Any, Dict, List
 
 from app.constants.roles import UserRole
-from app.constants.statuses import TicketStatus
-from app.database.collections import USERS, CONVERSATIONS, MESSAGES, TICKETS, DEPARTMENTS, FEEDBACK
+from app.constants.statuses import TicketStatus, KnowledgeStatus
+from app.database.collections import USERS, CONVERSATIONS, MESSAGES, TICKETS, DEPARTMENTS, FEEDBACK, KNOWLEDGE_BASE
 from app.models.feedback import RATING_POSITIVE, RATING_NEGATIVE
 from app.utils.helpers import utcnow
 from app.utils.ids import to_obj_id
@@ -237,4 +237,21 @@ async def feedback(db, days: int = 30) -> Dict[str, Any]:
         "total_count": total_count,
         "avg_per_day": avg_per_day,
         "recent_comments": recent_comments,
+    }
+
+
+async def knowledge(db) -> Dict[str, Any]:
+    total_docs = await db[KNOWLEDGE_BASE].count_documents({})
+    published = await db[KNOWLEDGE_BASE].count_documents({"status": KnowledgeStatus.PUBLISHED.value})
+    pipeline = [
+        {"$group": {"_id": "$category", "count": {"$sum": 1}}},
+        {"$sort": {"count": -1}},
+    ]
+    by_category = await db[KNOWLEDGE_BASE].aggregate(pipeline).to_list(length=50)
+    category_breakdown = {item["_id"]: item["count"] for item in by_category if item["_id"]}
+
+    return {
+        "total_documents": total_docs,
+        "published_documents": published,
+        "by_category": category_breakdown,
     }

@@ -274,3 +274,23 @@ async def test_13_super_admin_can_manage_admin_accounts(client, test_db, super_a
     assert role_resp.status_code == 200
     assert role_resp.json()["data"]["role"] == "admin"
 
+
+@pytest.mark.asyncio
+async def test_14_admin_analytics_endpoints(client, admin_user):
+    """14. Admin can query all analytics endpoints including knowledge analytics."""
+    resp = await client.get("/api/v1/admin/analytics/knowledge", headers=admin_user["headers"])
+    assert resp.status_code == 200
+    data = resp.json()["data"]
+    assert "total_documents" in data
+    assert "published_documents" in data
+    assert "by_category" in data
+
+    resp_tickets = await client.get("/api/v1/admin/analytics/tickets", headers=admin_user["headers"])
+    assert resp_tickets.status_code == 200
+
+    resp_intents = await client.get("/api/v1/admin/analytics/intents", headers=admin_user["headers"])
+    assert resp_intents.status_code == 200
+
+    resp_feedback = await client.get("/api/v1/admin/analytics/feedback", headers=admin_user["headers"])
+    assert resp_feedback.status_code == 200
+

@@ -15,7 +15,7 @@ from pydantic import BaseModel, Field
 from app.constants.priorities import TicketPriority
 from app.constants.roles import UserRole
 from app.constants.statuses import FAQStatus, KnowledgeStatus, TicketStatus
-from app.database.collections import AUDIT_LOGS, FAQS, USERS
+from app.database.collections import AUDIT_LOGS, FAQS, KNOWLEDGE_BASE, USERS
 from app.dependencies.auth import get_current_user
 from app.dependencies.database import get_db
 from app.dependencies.permissions import require_admin, require_super_admin
@@ -744,23 +744,8 @@ async def admin_analytics_feedback(
 async def admin_analytics_knowledge(
     db=Depends(get_db),
 ) -> Dict[str, Any]:
-    total_docs = await db[USERS].database[KNOWLEDGE_BASE].count_documents({})
-    published = await db[USERS].database[KNOWLEDGE_BASE].count_documents({"status": KnowledgeStatus.PUBLISHED.value})
-    pipeline = [
-        {"$group": {"_id": "$category", "count": {"$sum": 1}}},
-        {"$sort": {"count": -1}},
-    ]
-    by_category = await db[USERS].database[KNOWLEDGE_BASE].aggregate(pipeline).to_list(length=50)
-    category_breakdown = {item["_id"]: item["count"] for item in by_category if item["_id"]}
-
-    return {
-        "success": True,
-        "data": {
-            "total_documents": total_docs,
-            "published_documents": published,
-            "by_category": category_breakdown,
-        },
-    }
+    result = await analytics_service.knowledge(db)
+    return {"success": True, "data": result}
 
 
 # ============================================================================
