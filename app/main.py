@@ -16,20 +16,16 @@ app = FastAPI(
     redoc_url="/redoc",
 )
 
-origins = [settings.FRONTEND_URL]
-if settings.DEBUG or settings.APP_ENV.lower() != "production":
-    origins.append("http://localhost:3000")
-    origins.append("http://localhost:8080")
-
+app.add_middleware(RequestLoggingMiddleware)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=settings.cors_origins,
+    allow_origin_regex=settings.CORS_ALLOW_ORIGIN_REGEX,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["*"],
 )
-
-app.add_middleware(RequestLoggingMiddleware)
 
 register_exception_handlers(app)
 

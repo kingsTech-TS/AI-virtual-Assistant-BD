@@ -45,6 +45,32 @@ class Settings(BaseSettings):
     RAG_FINAL_CHUNKS: int = 4
 
     FRONTEND_URL: str = "http://localhost:3000"
+    CORS_ORIGINS: str = ""
+    CORS_ALLOW_ORIGIN_REGEX: Optional[str] = r"https://.*\.vercel\.app"
+
+    @property
+    def cors_origins(self) -> list[str]:
+        raw_origins: list[str] = []
+        if self.FRONTEND_URL:
+            raw_origins.extend([o.strip().rstrip("/") for o in self.FRONTEND_URL.split(",") if o.strip()])
+        if self.CORS_ORIGINS:
+            raw_origins.extend([o.strip().rstrip("/") for o in self.CORS_ORIGINS.split(",") if o.strip()])
+
+        # Always include the known production frontend URL
+        raw_origins.append("https://ai-virtual-assistant-kappa.vercel.app")
+
+        # Local development origins
+        raw_origins.extend([
+            "http://localhost:3000",
+            "http://localhost:5173",
+            "http://localhost:8080",
+            "http://127.0.0.1:3000",
+            "http://127.0.0.1:5173",
+            "http://127.0.0.1:8080",
+        ])
+
+        # Return deduplicated list
+        return list(dict.fromkeys(raw_origins))
 
     LOG_LEVEL: str = "INFO"
 
