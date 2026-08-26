@@ -50,47 +50,82 @@ class RetrievalService:
     async def _fetch_mongo_candidate_chunks(
         self,
         db,
+        clean_query: str = "",
         category: Optional[str] = None,
         department_id: Optional[str] = None,
-        limit: int = 25,
+        limit: int = 50,
     ) -> List[Dict[str, Any]]:
         """
-        Fetches candidate published knowledge base chunks from MongoDB.
-        Searches matching category and general published documents.
+        Fetches candidate published knowledge base chunks from MongoDB using
+        multi-stage matching: category alignment, keyword regex matching,
+        and broader published chunk pooling.
         """
-        query: Dict[str, Any] = {"status": "published"}
+        base_query: Dict[str, Any] = {"status": "published"}
         if department_id:
             dept_oid = to_obj_id(department_id)
-            query["$or"] = [{"department_id": None}, {"department_id": dept_oid}]
+            base_query["$or"] = [{"department_id": None}, {"department_id": dept_oid}]
 
-        # If a category is requested, we query matching category or general
-        if category and category != "general":
-            query["$or"] = [
-                {"category": category},
-                {"category": "general"},
-                {"category": None},
+        candidates: List[Dict[str, Any]] = []
+        seen_ids = set()
+
+        projection = {
+            "_id": 1,
+            "document_id": 1,
+            "title": 1,
+            "section": 1,
+            "category": 1,
+            "intent": 1,
+            "content": 1,
+            "page": 1,
+            "chunk_index": 1,
+            "department_id": 1,
+            "source": 1,
+            "embedding": 1,
+            "version": 1,
+        }
+
+        # 1. First search: Keyword & regex matching on query terms across published documents
+        words = [w for w in re.findall(r"[a-zA-Z0-9]{3,}", clean_query) if w.lower() not in {"what", "when", "where", "which", "how", "why", "the", "and", "for", "with"}]
+        if words:
+            pattern = "|".join(re.escape(w) for w in words[:6])
+            regex_query = dict(base_query)
+            regex_query["$or"] = [
+                {"content": {"$regex": pattern, "$options": "i"}},
+                {"title": {"$regex": pattern, "$options": "i"}},
+                {"section": {"$regex": pattern, "$options": "i"}},
             ]
+            cursor = db[KNOWLEDGE_BASE].find(regex_query, projection).limit(limit)
+            keyword_docs = await cursor.to_list(length=limit)
+            for doc in keyword_docs:
+                doc_id = str(doc.get("_id"))
+                if doc_id not in seen_ids:
+                    seen_ids.add(doc_id)
+                    candidates.append(doc)
 
-        cursor = db[KNOWLEDGE_BASE].find(
-            query,
-            {
-                "_id": 1,
-                "document_id": 1,
-                "title": 1,
-                "section": 1,
-                "category": 1,
-                "intent": 1,
-                "content": 1,
-                "page": 1,
-                "chunk_index": 1,
-                "department_id": 1,
-                "source": 1,
-                "embedding": 1,
-                "version": 1,
-            }
-        ).limit(limit)
+        # 2. Second search: Category matching if category is provided
+        if len(candidates) < limit and category and category != "general":
+            cat_query = dict(base_query)
+            cat_query["category"] = category
+            cursor = db[KNOWLEDGE_BASE].find(cat_query, projection).limit(limit - len(candidates))
+            cat_docs = await cursor.to_list(length=limit - len(candidates))
+            for doc in cat_docs:
+                doc_id = str(doc.get("_id"))
+                if doc_id not in seen_ids:
+                    seen_ids.add(doc_id)
+                    candidates.append(doc)
 
-        return await cursor.to_list(length=limit)
+        # 3. Third search: General published pool fallback
+        if len(candidates) < limit:
+            remaining = limit - len(candidates)
+            cursor = db[KNOWLEDGE_BASE].find(base_query, projection).limit(remaining)
+            general_docs = await cursor.to_list(length=remaining)
+            for doc in general_docs:
+                doc_id = str(doc.get("_id"))
+                if doc_id not in seen_ids:
+                    seen_ids.add(doc_id)
+                    candidates.append(doc)
+
+        return candidates
 
     async def retrieve(
         self,
@@ -139,9 +174,10 @@ class RetrievalService:
         if len(candidates) < 3:
             mongo_candidates = await self._fetch_mongo_candidate_chunks(
                 db=db,
+                clean_query=clean_query,
                 category=category,
                 department_id=department_id,
-                limit=30,
+                limit=50,
             )
             # Merge and deduplicate candidates by _id
             seen_ids = {str(c.get("_id")) for c in candidates}
