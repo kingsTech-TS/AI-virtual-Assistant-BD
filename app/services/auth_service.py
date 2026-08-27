@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import timedelta
 from typing import Any, Dict
 
 from bson import ObjectId
@@ -15,7 +16,7 @@ from app.core.security import (
     hash_password,
     verify_password,
 )
-from app.database.collections import USERS
+from app.database.collections import PASSWORD_RESET_TOKENS, USERS
 from app.models.user import new_user_doc, user_to_dict
 from app.schemas.auth import LoginRequest, RegisterRequest, StaffRegisterRequest
 from app.services.audit_service import audit_action
@@ -172,16 +173,47 @@ async def logout(db, current_user: Dict[str, Any], token_jti_or_str: str | None 
 
 async def forgot_password(db, email: str) -> Dict[str, Any]:
     user = await db[USERS].find_one({"email": email.lower()})
+
     if not user:
         return {
-            "reset_token": create_reset_token(subject="unknown"),
-            "message": "If this email is registered, a password reset link has been generated.",
+            "message": "If this email is registered, a password reset link has been sent.",
         }
-    reset_token = create_reset_token(subject=user["_id"])
-    return {
-        "reset_token": reset_token,
-        "message": "Password reset token generated (dev view). In production, this would be emailed only.",
+
+    user_id = to_obj_id(user["_id"])
+    now = utcnow()
+    reset_token, jti = create_reset_token(subject=user_id)
+    expires_at = now + timedelta(minutes=60)
+
+    await db[PASSWORD_RESET_TOKENS].update_many(
+        {"user_id": user_id, "is_used": False, "is_invalidated": False},
+        {"$set": {"is_invalidated": True, "invalidated_at": now}},
+    )
+
+    token_doc = {
+        "jti": jti,
+        "user_id": user_id,
+        "email": email.lower(),
+        "role": user.get("role"),
+        "expires_at": expires_at,
+        "is_used": False,
+        "is_invalidated": False,
+        "created_at": now,
     }
+    await db[PASSWORD_RESET_TOKENS].insert_one(token_doc)
+
+    try:
+        from app.services.email_service import send_password_reset_email
+        await send_password_reset_email(email, reset_token, user.get("name", ""))
+    except Exception:
+        pass
+
+    response: Dict[str, Any] = {
+        "message": "If this email is registered, a password reset link has been sent.",
+    }
+    if settings.APP_ENV in ("development", "testing") or settings.DEBUG:
+        response["reset_token"] = reset_token
+        response["reset_url"] = f"{settings.FRONTEND_URL}/reset-password?token={reset_token}"
+    return response
 
 
 async def reset_password(db, reset_token: str, new_password: str) -> Dict[str, Any]:
@@ -192,17 +224,46 @@ async def reset_password(db, reset_token: str, new_password: str) -> Dict[str, A
     oid = to_obj_id(sub)
     if not oid:
         raise BadRequest(message="Invalid reset token", code="TOKEN_SUBJECT_INVALID")
+
+    jti = payload.get("jti")
+    token_doc = None
+    if jti:
+        token_doc = await db[PASSWORD_RESET_TOKENS].find_one({"jti": jti})
+
+    if token_doc:
+        if token_doc.get("is_used"):
+            raise BadRequest(message="Reset token has already been used", code="TOKEN_USED")
+        if token_doc.get("is_invalidated"):
+            raise BadRequest(message="Reset token has been invalidated", code="TOKEN_INVALIDATED")
+        expires_at = token_doc.get("expires_at")
+        if expires_at and expires_at < utcnow():
+            raise BadRequest(message="Reset token has expired", code="TOKEN_EXPIRED")
+        if token_doc.get("user_id") != oid:
+            raise BadRequest(message="Invalid reset token", code="TOKEN_SUBJECT_MISMATCH")
+    else:
+        raise BadRequest(message="Invalid or expired reset token", code="TOKEN_NOT_FOUND")
+
     user = await db[USERS].find_one({"_id": oid})
     if not user:
         raise NotFound(message="User not found", code="USER_NOT_FOUND")
+    if not user.get("is_active", True):
+        raise BadRequest(message="Account is disabled", code="USER_DISABLED")
+
     new_hash = hash_password(new_password)
+    now = utcnow()
+
+    await db[PASSWORD_RESET_TOKENS].update_one(
+        {"jti": jti},
+        {"$set": {"is_used": True, "used_at": now}},
+    )
+
     await db[USERS].update_one(
         {"_id": oid},
         {
             "$set": {
                 "password_hash": new_hash,
                 "refresh_tokens": [],
-                "updated_at": utcnow(),
+                "updated_at": now,
             }
         },
     )

@@ -92,13 +92,12 @@ def create_refresh_token(
 def create_reset_token(
     subject: Any,
     expires_minutes: int = 60,
-) -> str:
-    token, _ = _create_token(
+) -> Tuple[str, str]:
+    return _create_token(
         token_type=TOKEN_TYPE_RESET,
         subject=subject,
         expires_delta=timedelta(minutes=expires_minutes),
     )
-    return token
 
 
 def decode_token(token: str) -> Dict[str, Any]:

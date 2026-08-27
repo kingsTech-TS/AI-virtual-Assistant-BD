@@ -8,6 +8,7 @@ from app.database.collections import (
     KNOWLEDGE_BASE,
     MESSAGES,
     NOTIFICATIONS,
+    PASSWORD_RESET_TOKENS,
     TICKETS,
     USERS,
 )
@@ -218,5 +219,23 @@ INDEXES: List[IndexSpec] = [
         "key": [("created_at", -1)],
         "unique": False,
         "kwargs": {"name": "idx_notifications_created_at"},
+    },
+    {
+        "collection": PASSWORD_RESET_TOKENS,
+        "key": [("jti", 1)],
+        "unique": True,
+        "kwargs": {"name": "idx_password_reset_jti_unique"},
+    },
+    {
+        "collection": PASSWORD_RESET_TOKENS,
+        "key": [("user_id", 1)],
+        "unique": False,
+        "kwargs": {"name": "idx_password_reset_user_id"},
+    },
+    {
+        "collection": PASSWORD_RESET_TOKENS,
+        "key": [("expires_at", 1)],
+        "unique": False,
+        "kwargs": {"name": "idx_password_reset_expires_at", "expireAfterSeconds": 0},
     },
 ]

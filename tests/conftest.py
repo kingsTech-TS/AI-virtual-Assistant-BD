@@ -180,6 +180,29 @@ class MockAsyncCollection:
         res.modified_count = 0
         return res
 
+    async def update_many(self, query: Dict[str, Any], update: Dict[str, Any]):
+        modified = 0
+        for d in self.docs:
+            if _doc_matches(d, query):
+                if "$set" in update:
+                    for k, v in update["$set"].items():
+                        d[k] = v
+                if "$push" in update:
+                    for k, v in update["$push"].items():
+                        lst = d.setdefault(k, [])
+                        if isinstance(v, dict) and "$each" in v:
+                            lst.extend(v["$each"])
+                        else:
+                            lst.append(v)
+                if "$pull" in update:
+                    for k, v in update["$pull"].items():
+                        if k in d and isinstance(d[k], list):
+                            d[k] = [item for item in d[k] if item != v]
+                modified += 1
+        res = MagicMock()
+        res.modified_count = modified
+        return res
+
     async def find_one_and_update(
         self, query: Dict[str, Any], update: Dict[str, Any], return_document: bool = True
     ):

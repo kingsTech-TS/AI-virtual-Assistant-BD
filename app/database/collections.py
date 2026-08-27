@@ -13,6 +13,7 @@ DEPARTMENTS: str = "departments"
 NOTIFICATIONS: str = "notifications"
 FEEDBACK: str = "feedback"
 AUDIT_LOGS: str = "audit_logs"
+PASSWORD_RESET_TOKENS: str = "password_reset_tokens"
 
 ALL_COLLECTIONS: List[str] = [
     USERS,
@@ -25,6 +26,7 @@ ALL_COLLECTIONS: List[str] = [
     NOTIFICATIONS,
     FEEDBACK,
     AUDIT_LOGS,
+    PASSWORD_RESET_TOKENS,
 ]
 
 
