@@ -2,6 +2,7 @@ from typing import Any, Dict
 
 from fastapi import APIRouter, Depends, Header, status
 
+from app.database.collections import DEPARTMENTS
 from app.dependencies.auth import get_current_user
 from app.dependencies.database import get_db
 from app.schemas.auth import (
@@ -10,6 +11,7 @@ from app.schemas.auth import (
     RefreshRequest,
     RegisterRequest,
     ResetPasswordRequest,
+    StaffRegisterRequest,
 )
 from app.schemas.common import SuccessResponse
 from app.schemas.user import UserResponse
@@ -25,6 +27,50 @@ async def register(
 ) -> SuccessResponse[UserResponse]:
     user = await auth_service.register(db, data)
     return SuccessResponse[UserResponse](data=user)
+
+
+@router.post("/register/staff", status_code=status.HTTP_201_CREATED)
+async def register_staff(
+    data: StaffRegisterRequest,
+    db=Depends(get_db),
+) -> SuccessResponse[UserResponse]:
+    user = await auth_service.register_staff(db, data)
+    return SuccessResponse[UserResponse](data=user)
+
+
+@router.get("/options/departments")
+async def get_department_options(
+    db=Depends(get_db),
+) -> Dict[str, Any]:
+    cursor = db[DEPARTMENTS].find(
+        {"is_active": True},
+        {"_id": 1, "name": 1, "code": 1, "faculty": 1},
+    ).sort("name", 1)
+    docs = await cursor.to_list(length=500)
+    items = [
+        {
+            "id": str(d["_id"]),
+            "name": d.get("name", ""),
+            "code": d.get("code", ""),
+            "faculty": d.get("faculty"),
+        }
+        for d in docs
+    ]
+    return {"success": True, "data": items}
+
+
+@router.get("/options/faculties")
+async def get_faculty_options(
+    db=Depends(get_db),
+) -> Dict[str, Any]:
+    pipeline = [
+        {"$match": {"is_active": True, "faculty": {"$nin": [None, ""]}}},
+        {"$group": {"_id": "$faculty"}},
+        {"$sort": {"_id": 1}},
+    ]
+    results = await db[DEPARTMENTS].aggregate(pipeline).to_list(length=200)
+    items = [r["_id"] for r in results if r.get("_id")]
+    return {"success": True, "data": items}
 
 
 @router.post("/login")

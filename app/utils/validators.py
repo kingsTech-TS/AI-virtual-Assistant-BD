@@ -24,7 +24,7 @@ _MONGO_STRING_INJECTION_RE = re.compile(
     r"(\$where|\$expr|\$function|\$accumulator)", re.IGNORECASE
 )
 
-_MATRIC_NUMBER_RE = re.compile(r"^[A-Za-z0-9]{3,20}$")
+_MATRIC_NUMBER_RE = re.compile(r"^\d{9}$")
 
 
 def validate_email(email: str) -> str:

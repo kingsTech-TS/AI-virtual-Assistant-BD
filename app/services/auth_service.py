@@ -17,7 +17,7 @@ from app.core.security import (
 )
 from app.database.collections import USERS
 from app.models.user import new_user_doc, user_to_dict
-from app.schemas.auth import LoginRequest, RegisterRequest
+from app.schemas.auth import LoginRequest, RegisterRequest, StaffRegisterRequest
 from app.services.audit_service import audit_action
 from app.utils.helpers import utcnow
 from app.utils.ids import to_obj_id
@@ -40,6 +40,30 @@ async def register(db, data: RegisterRequest) -> Dict[str, Any]:
         department_id=to_obj_id(getattr(data, "department_id", None)),
         faculty=getattr(data, "faculty", None),
         phone=getattr(data, "phone", None),
+    )
+    result = await db[USERS].insert_one(doc)
+    doc["_id"] = result.inserted_id
+    return user_to_dict(doc)
+
+
+async def register_staff(db, data: StaffRegisterRequest) -> Dict[str, Any]:
+    existing = await db[USERS].find_one({"email": data.email.lower()})
+    if existing:
+        raise Conflict(message="A user with this email already exists", code="EMAIL_TAKEN")
+    if getattr(data, "staff_id", None):
+        dup = await db[USERS].find_one({"staff_id": data.staff_id})
+        if dup:
+            raise Conflict(message="Staff ID already registered", code="STAFF_ID_TAKEN")
+    doc = new_user_doc(
+        name=data.name,
+        email=data.email,
+        password_hash=hash_password(data.password),
+        role=UserRole.STAFF.value,
+        staff_id=getattr(data, "staff_id", None),
+        department_id=to_obj_id(getattr(data, "department_id", None)),
+        faculty=getattr(data, "faculty", None),
+        phone=getattr(data, "phone", None),
+        position=getattr(data, "position", None),
     )
     result = await db[USERS].insert_one(doc)
     doc["_id"] = result.inserted_id
